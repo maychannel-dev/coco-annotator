@@ -285,6 +285,7 @@ def import_annotations(task_id, dataset_id, coco_json):
             task.info(
                 f"Annotation already exists (i:{image_id}, c:{category_id})")
 
+    task.info("===== Create Thumbnails =====")
     for image_id in images_id:
         image_model = images_id[image_id]
         category_ids = categories_by_image[image_id]
@@ -302,6 +303,7 @@ def import_annotations(task_id, dataset_id, coco_json):
             set__num_annotations=num_annotations
         )
         image_model.thumbnail(regen=True)
+        task.info(image_id)
 
     task.set_progress(100, socket=socket)
 
