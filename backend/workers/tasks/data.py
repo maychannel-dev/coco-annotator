@@ -192,11 +192,11 @@ def import_annotations(task_id, dataset_id, coco_json):
     task.info("===== Loading Images =====")
     # image id mapping ( file: database )
     images_id = {}
+    image_maps = {}
     categories_by_image = {}
 
     # Find all images
     for image in coco_images:
-        image_id = image.get('id')
         image_filename = image.get('file_name')
 
         # update progress
@@ -216,13 +216,15 @@ def import_annotations(task_id, dataset_id, coco_json):
 
         task.info(f"Image {image_filename} found")
         image_model = image_model[0]
+        image_id = image_model.id
+        image_maps[image.get('id')] = image_id
         images_id[image_id] = image_model
         categories_by_image[image_id] = list()
 
     task.info("===== Import Annotations =====")
     for annotation in coco_annotations:
 
-        image_id = annotation.get('image_id')
+        image_id = image_maps[annotation.get('image_id')]
         category_id = annotation.get('category_id')
         segmentation = annotation.get('segmentation', [])
         keypoints = annotation.get('keypoints', [])
