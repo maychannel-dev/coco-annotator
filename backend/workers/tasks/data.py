@@ -299,6 +299,7 @@ def import_annotations(task_id, dataset_id, coco_json):
             set__category_ids=list(set(all_category_ids)),
             set__num_annotations=num_annotations
         )
+        image_model.thumbnail(regen=True)
 
     task.set_progress(100, socket=socket)
 

@@ -92,14 +92,14 @@ class ImageModel(DynamicDocument):
         AnnotationModel.objects(image_id=self.id).delete()
         return super(ImageModel, self).delete(*args, **kwargs)
 
-    def thumbnail(self):
+    def thumbnail(self, regen=False):
         """
         Generates (if required) and returns thumbnail
         """
         
         thumbnail_path = self.thumbnail_path()
 
-        if self.regenerate_thumbnail or \
+        if self.regenerate_thumbnail or regen or \
             not os.path.isfile(thumbnail_path):
             
             # logger.debug(f'Generating thumbnail for {self.id}')
