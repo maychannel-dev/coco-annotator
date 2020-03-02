@@ -87,6 +87,101 @@ export default {
           function: this.previousImage
         },
         {
+          default: ["0"],
+          name: "Change Category to 0",
+          function: () => {
+            let current = this.currentAnnotation
+            if (current.annotation) {
+              this.updateAnnotationCategory(current.annotation, current.$parent.category, "0")
+            }
+          }
+        },
+        {
+          default: ["1"],
+          name: "Change Category to 1",
+          function: () => {
+            let current = this.currentAnnotation
+            if (current.annotation) {
+              this.updateAnnotationCategory(current.annotation, current.$parent.category, "1")
+            }
+          }
+        },
+        {
+          default: ["2"],
+          name: "Change Category to 2",
+          function: () => {
+            let current = this.currentAnnotation
+            if (current.annotation) {
+              this.updateAnnotationCategory(current.annotation, current.$parent.category, "2")
+            }
+          }
+        },
+        {
+          default: ["3"],
+          name: "Change Category to 3",
+          function: () => {
+            let current = this.currentAnnotation
+            if (current.annotation) {
+              this.updateAnnotationCategory(current.annotation, current.$parent.category, "3")
+            }
+          }
+        },
+        {
+          default: ["4"],
+          name: "Change Category to 4",
+          function: () => {
+            let current = this.currentAnnotation
+            if (current.annotation) {
+              this.updateAnnotationCategory(current.annotation, current.$parent.category, "4")
+            }
+          }
+        },{
+          default: ["5"],
+          name: "Change Category to 5",
+          function: () => {
+            let current = this.currentAnnotation
+            if (current.annotation) {
+              this.updateAnnotationCategory(current.annotation, current.$parent.category, "5")
+            }
+          }
+        },{
+          default: ["6"],
+          name: "Change Category to 6",
+          function: () => {
+            let current = this.currentAnnotation
+            if (current.annotation) {
+              this.updateAnnotationCategory(current.annotation, current.$parent.category, "6")
+            }
+          }
+        },{
+          default: ["7"],
+          name: "Change Category to 7",
+          function: () => {
+            let current = this.currentAnnotation
+            if (current.annotation) {
+              this.updateAnnotationCategory(current.annotation, current.$parent.category, "7")
+            }
+          }
+        },{
+          default: ["8"],
+          name: "Change Category to 8",
+          function: () => {
+            let current = this.currentAnnotation
+            if (current.annotation) {
+              this.updateAnnotationCategory(current.annotation, current.$parent.category, "8")
+            }
+          }
+        },{
+          default: ["9"],
+          name: "Change Category to 9",
+          function: () => {
+            let current = this.currentAnnotation
+            if (current.annotation) {
+              this.updateAnnotationCategory(current.annotation, current.$parent.category, "9")
+            }
+          }
+        },
+        {
           default: ["v"],
           name: "Polygon Tool",
           function: () => {
