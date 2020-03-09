@@ -593,7 +593,7 @@ class DatasetComplete(Resource):
     @login_required
     def post(self, dataset_id):
 
-        """ Set complete flag dataset by ID """
+        """ Set complete flag by dataset ID"""
 
         dataset = current_user.datasets.filter(id=dataset_id, deleted=False).first()
         if dataset is None:
@@ -602,3 +602,21 @@ class DatasetComplete(Resource):
         dataset.update(completed=True)
 
         return {"success": True}
+
+
+@api.route('/<int:dataset_id>/incomplete')
+class DatasetComplete(Resource):
+
+    @login_required
+    def post(self, dataset_id):
+
+        """ Set complete flag to false by dataset ID """
+
+        dataset = current_user.datasets.filter(id=dataset_id, deleted=False).first()
+        if dataset is None:
+            return {"message": "Invalid dataset id"}, 400
+
+        dataset.update(completed=False)
+
+        return {"success": True}
+
