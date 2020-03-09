@@ -43,6 +43,13 @@
             >
               Refresh
             </button>
+            <button
+              type="button"
+              class="btn btn-incomplete"
+              @click="incompleteDataset()"
+            >
+              Incomplete
+            </button>
           </div>
         </div>
 
@@ -182,6 +189,7 @@
 </template>
 
 <script>
+import axios from "axios";
 import toastrs from "@/mixins/toastrs";
 import Datasets from "@/models/datasets";
 import AdminPanel from "@/models/admin";
@@ -254,6 +262,16 @@ export default {
             error.response.data.message
           );
         });
+    },
+    incompleteDataset() {
+      axios
+        .post("/api/dataset/incomplete/last")
+        .then(() => {
+          this.updatePage();
+        })
+        .catch(err => {
+          console.log(err)
+        });
     }
   },
   watch: {
@@ -292,5 +310,9 @@ export default {
   color: darkblue;
   font-size: 20px;
   display: inline;
+}
+.btn-incomplete {
+  color: white;
+  background: orange;
 }
 </style>
