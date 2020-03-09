@@ -271,6 +271,19 @@
         </p>
       </div>
       <hr>
+      <h6 class="sidebar-title text-center">Category Batch Conversion</h6>
+      <div class="sidebar-section" style="max-height: 30%; color: lightgray">
+        <PanelDropdown v-model="convertCategory1" :values="categories.map(c => c.name)" />
+        <PanelDropdown v-model="convertCategory2" :values="categories.map(c => c.name)" />
+        <button
+          class="btn badge badge-pill badge-primary"
+          style="margin: 2px"
+          @click="batchConvertCategory(convertCategory1, convertCategory2)"
+        >
+          Convert
+        </button>
+      </div>
+      <hr>
       <h6 class="sidebar-title text-center">Filtering Options</h6>
       <div
         class="sidebar-section"
@@ -527,6 +540,8 @@ export default {
         id: "Id",
         path: "File Path"
       },
+      convertCategory1: "",
+      convertCategory2: "",
       query: {
         file_name__icontains: "",
         ...this.$route.query
@@ -540,6 +555,25 @@ export default {
   },
   methods: {
     ...mapMutations(["addProcess", "removeProcess"]),
+    batchConvertCategory(category1, category2) {
+      let process = "Batch convert categories for" + this.dataset.name;
+      this.addProcess(process);
+
+      Dataset.convertCategory(this.dataset.id, {
+        category_id1: this.categories[category1].id,
+        category_id2: this.categories[category2].id
+      })
+        .then(() => {
+          this.updatePage()
+        })
+        .catch(error => {
+          this.axiosReqestError(
+            "Convert Category",
+            error.response.data.message
+          )
+        })
+        .finally(() => this.removeProcess(process));
+    },
     generateDataset() {
       if (this.keyword.length === 0) return;
 
