@@ -60,6 +60,10 @@ dataset_generate.add_argument('limit', location='json', type=int, default=100, h
 share = reqparse.RequestParser()
 share.add_argument('users', location='json', type=list, default=[], help="List of users")
 
+convert_category = reqparse.RequestParser()
+convert_category.add_argument('category_id1', type=int, location='json')
+convert_category.add_argument('category_id2', type=int, location='json')
+
 
 @api.route('/')
 class Dataset(Resource):
@@ -634,5 +638,44 @@ class DatasetComplete(Resource):
             return {"message": "Invalid dataset id"}, 400
 
         dataset.update(completed=False, completed_date=None)
+
+        return {"success": True}
+
+
+@api.route('/<int:dataset_id>/batch-convert')
+class Annotation(Resource):
+
+    @api.expect(convert_category)
+    @login_required
+    def put(self, dataset_id):
+        """ Convert categories by dataset ID """
+        args = convert_category.parse_args()
+        category_id1 = args.get('category_id1')
+        category_id2 = args.get('category_id2')
+
+        docRef1 = current_user.annotations.filter(dataset_id=dataset_id, category_id=category_id1, deleted=False)
+        docRef2 = current_user.annotations.filter(dataset_id=dataset_id, category_id=category_id2, deleted=False)
+
+        if docRef1 is None or docRef2 is None:
+            return {"message": "Invalid dataset id"}, 400
+
+        # docRefs are filtered when they are fetched, so get them first
+        annots1 = []
+        for doc in docRef1:
+            annots1.append(doc)
+
+        annots2 = []
+        for doc in docRef2:
+            annots2.append(doc)
+
+        try:
+            for annot in annots1:
+                annot.update(category_id=category_id2)
+
+            for annot in annots2:
+                annot.update(category_id=category_id1)
+
+        except (ValueError, TypeError) as e:
+            return {'message': str(e)}, 400
 
         return {"success": True}
