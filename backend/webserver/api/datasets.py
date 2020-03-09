@@ -672,8 +672,26 @@ class Annotation(Resource):
             for annot in annots1:
                 annot.update(category_id=category_id2)
 
+                image_model = current_user.images.filter(id=annot.image_id).first()
+                all_category_ids = list(image_model.category_ids)
+                all_category_ids.remove(category_id1)
+                all_category_ids.append(category_id2)
+                image_model.update(
+                    set__category_ids=list(set(all_category_ids))
+                )
+                image_model.thumbnail(regen=True)
+
             for annot in annots2:
                 annot.update(category_id=category_id1)
+
+                image_model = current_user.images.filter(id=annot.image_id).first()
+                all_category_ids = list(image_model.category_ids)
+                all_category_ids.remove(category_id2)
+                all_category_ids.append(category_id1)
+                image_model.update(
+                    set__category_ids=list(set(all_category_ids))
+                )
+                image_model.thumbnail(regen=True)
 
         except (ValueError, TypeError) as e:
             return {'message': str(e)}, 400
