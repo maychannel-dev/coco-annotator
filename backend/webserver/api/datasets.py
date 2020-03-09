@@ -599,7 +599,7 @@ class DatasetComplete(Resource):
         if dataset is None:
             return {"message": "Invalid dataset id"}, 400
 
-        dataset.update(completed=True)
+        dataset.update(completed=True, set__completed_date=datetime.datetime.now())
 
         return {"success": True}
 

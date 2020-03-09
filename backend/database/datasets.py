@@ -27,6 +27,7 @@ class DatasetModel(DynamicDocument):
     deleted_date = DateTimeField()
 
     completed = BooleanField(default=False)
+    completed_date = DateTimeField()
 
     def save(self, *args, **kwargs):
 
