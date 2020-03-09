@@ -266,7 +266,7 @@ export default {
     },
     onCompleteClick() {
       axios
-        .post("/api/dataset/" + this.dataset.id + "/complete")
+        .post("/api/dataset/complete/" + this.dataset.id)
         .then(() => {
           this.$parent.updatePage();
         })

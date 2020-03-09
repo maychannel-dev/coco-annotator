@@ -587,7 +587,7 @@ class DatasetScan(Resource):
         return dataset.scan()
 
 
-@api.route('/<int:dataset_id>/complete')
+@api.route('/complete/<int:dataset_id>')
 class DatasetComplete(Resource):
 
     @login_required
@@ -604,7 +604,7 @@ class DatasetComplete(Resource):
         return {"success": True}
 
 
-@api.route('/<int:dataset_id>/incomplete')
+@api.route('/incomplete/<int:dataset_id>')
 class DatasetComplete(Resource):
 
     @login_required
