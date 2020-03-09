@@ -656,9 +656,6 @@ class Annotation(Resource):
         docRef1 = current_user.annotations.filter(dataset_id=dataset_id, category_id=category_id1, deleted=False)
         docRef2 = current_user.annotations.filter(dataset_id=dataset_id, category_id=category_id2, deleted=False)
 
-        if docRef1 is None or docRef2 is None:
-            return {"message": "Invalid dataset id"}, 400
-
         # docRefs are filtered when they are fetched, so get them first
         annots1 = []
         for doc in docRef1:
