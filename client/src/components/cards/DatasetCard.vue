@@ -81,6 +81,12 @@
           >
             Download COCO
           </button>
+          <button
+            class="dropdown-item"
+            @click="onCompleteClick"
+          >
+            Complete
+          </button>
           <hr v-show="dataset.permissions.delete" />
           <button
             class="dropdown-item delete"
@@ -256,6 +262,16 @@ export default {
         })
         .then(() => {
           this.$parent.updatePage();
+        });
+    },
+    onCompleteClick() {
+      axios
+        .post("/api/dataset/complete/" + this.dataset.id)
+        .then(() => {
+          this.$parent.updatePage();
+        })
+        .catch(err => {
+          console.log(err)
         });
     },
     onCocoDownloadClick() {

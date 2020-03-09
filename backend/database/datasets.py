@@ -26,6 +26,9 @@ class DatasetModel(DynamicDocument):
     deleted = BooleanField(default=False)
     deleted_date = DateTimeField()
 
+    completed = BooleanField(default=False)
+    completed_date = DateTimeField(null=True)
+
     def save(self, *args, **kwargs):
 
         directory = os.path.join(Config.DATASET_DIRECTORY, self.name + '/')

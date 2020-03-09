@@ -299,7 +299,7 @@ class DatasetData(Resource):
         page = args['page']
         folder = args['folder']
 
-        datasets = current_user.datasets.filter(deleted=False)
+        datasets = current_user.datasets.filter(deleted=False, completed=False)
         pagination = Pagination(datasets.count(), limit, page)
         datasets = datasets[pagination.start:pagination.end]
 
@@ -586,3 +586,53 @@ class DatasetScan(Resource):
         
         return dataset.scan()
 
+
+@api.route('/complete/<int:dataset_id>')
+class DatasetComplete(Resource):
+
+    @login_required
+    def post(self, dataset_id):
+
+        """ Set complete flag by dataset ID"""
+
+        dataset = current_user.datasets.filter(id=dataset_id, deleted=False).first()
+        if dataset is None:
+            return {"message": "Invalid dataset id"}, 400
+
+        dataset.update(completed=True, completed_date=datetime.datetime.now())
+
+        return {"success": True}
+
+
+@api.route('/incomplete/<int:dataset_id>')
+class DatasetComplete(Resource):
+
+    @login_required
+    def post(self, dataset_id):
+
+        """ Set complete flag to false by dataset ID """
+
+        dataset = current_user.datasets.filter(id=dataset_id, deleted=False).first()
+        if dataset is None:
+            return {"message": "Invalid dataset id"}, 400
+
+        dataset.update(completed=False)
+
+        return {"success": True}
+
+
+@api.route('/incomplete/last')
+class DatasetComplete(Resource):
+
+    @login_required
+    def post(self):
+
+        """ Set complete flag to false by dataset ID """
+
+        dataset = current_user.datasets.order_by('-completed_date').limit(1).first()
+        if dataset is None:
+            return {"message": "Invalid dataset id"}, 400
+
+        dataset.update(completed=False, completed_date=None)
+
+        return {"success": True}
