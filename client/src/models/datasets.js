@@ -60,5 +60,10 @@ export default {
   },
   resetMetadata(id) {
     return axios.get(`${baseURL}/${id}/reset/metadata`);
-  }
+  },
+  convertCategory(id, body) {
+    return axios.put(`${baseURL}/${id}/batch-convert`, {
+      ...body
+    });
+  },
 };

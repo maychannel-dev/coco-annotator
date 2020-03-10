@@ -5,6 +5,7 @@ from werkzeug.datastructures import FileStorage
 from mongoengine.errors import NotUniqueError
 from mongoengine.queryset.visitor import Q
 from threading import Thread
+from collections import defaultdict
 
 from google_images_download import google_images_download as gid
 
@@ -59,6 +60,10 @@ dataset_generate.add_argument('limit', location='json', type=int, default=100, h
 
 share = reqparse.RequestParser()
 share.add_argument('users', location='json', type=list, default=[], help="List of users")
+
+convert_category = reqparse.RequestParser()
+convert_category.add_argument('category_id1', type=int, location='json')
+convert_category.add_argument('category_id2', type=int, location='json')
 
 
 @api.route('/')
@@ -634,5 +639,61 @@ class DatasetComplete(Resource):
             return {"message": "Invalid dataset id"}, 400
 
         dataset.update(completed=False, completed_date=None)
+
+        return {"success": True}
+
+
+@api.route('/<int:dataset_id>/batch-convert')
+class DatasetBatchConv(Resource):
+
+    @api.expect(convert_category)
+    @login_required
+    def put(self, dataset_id):
+        """ Convert categories by dataset ID """
+        args = convert_category.parse_args()
+        category_id1 = args.get('category_id1')
+        category_id2 = args.get('category_id2')
+
+        docRef1 = current_user.annotations.filter(dataset_id=dataset_id, category_id=category_id1, deleted=False)
+        docRef2 = current_user.annotations.filter(dataset_id=dataset_id, category_id=category_id2, deleted=False)
+
+        # docRefs are filtered when they are fetched, so get them first
+        annots1 = []
+        for doc in docRef1:
+            annots1.append(doc)
+
+        annots2 = []
+        for doc in docRef2:
+            annots2.append(doc)
+
+        new_category_ids = defaultdict(list)
+        try:
+            for annot in annots1:
+                annot.update(category_id=category_id2)
+
+                image_model = current_user.images.filter(id=annot.image_id).first()
+                if image_model.id not in new_category_ids.keys():
+                    new_category_ids[image_model.id] = list(image_model.category_ids)
+                new_category_ids[image_model.id].remove(category_id1)
+                new_category_ids[image_model.id].append(category_id2)
+
+            for annot in annots2:
+                annot.update(category_id=category_id1)
+
+                image_model = current_user.images.filter(id=annot.image_id).first()
+                if image_model.id not in new_category_ids.keys():
+                    new_category_ids[image_model.id] = list(image_model.category_ids)
+                new_category_ids[image_model.id].remove(category_id2)
+                new_category_ids[image_model.id].append(category_id1)
+
+            for k, v in new_category_ids.items():
+                image_model = current_user.images.filter(id=k).first()
+                image_model.update(
+                    set__category_ids=v
+                )
+                image_model.thumbnail(regen=True)
+
+        except (ValueError, TypeError) as e:
+            return {'message': str(e) + str(new_category_ids)}, 400
 
         return {"success": True}
