@@ -5,6 +5,7 @@ from werkzeug.datastructures import FileStorage
 from mongoengine.errors import NotUniqueError
 from mongoengine.queryset.visitor import Q
 from threading import Thread
+from collections import defaultdict
 
 from google_images_download import google_images_download as gid
 
@@ -643,7 +644,7 @@ class DatasetComplete(Resource):
 
 
 @api.route('/<int:dataset_id>/batch-convert')
-class Annotation(Resource):
+class DatasetBatchConv(Resource):
 
     @api.expect(convert_category)
     @login_required
@@ -665,32 +666,34 @@ class Annotation(Resource):
         for doc in docRef2:
             annots2.append(doc)
 
+        new_category_ids = defaultdict(list)
         try:
             for annot in annots1:
                 annot.update(category_id=category_id2)
 
                 image_model = current_user.images.filter(id=annot.image_id).first()
-                all_category_ids = list(image_model.category_ids)
-                all_category_ids.remove(category_id1)
-                all_category_ids.append(category_id2)
-                image_model.update(
-                    set__category_ids=list(set(all_category_ids))
-                )
-                image_model.thumbnail(regen=True)
+                if image_model.id not in new_category_ids.keys():
+                    new_category_ids[image_model.id] = list(image_model.category_ids)
+                new_category_ids[image_model.id].remove(category_id1)
+                new_category_ids[image_model.id].append(category_id2)
 
             for annot in annots2:
                 annot.update(category_id=category_id1)
 
                 image_model = current_user.images.filter(id=annot.image_id).first()
-                all_category_ids = list(image_model.category_ids)
-                all_category_ids.remove(category_id2)
-                all_category_ids.append(category_id1)
+                if image_model.id not in new_category_ids.keys():
+                    new_category_ids[image_model.id] = list(image_model.category_ids)
+                new_category_ids[image_model.id].remove(category_id2)
+                new_category_ids[image_model.id].append(category_id1)
+
+            for k, v in new_category_ids.items():
+                image_model = current_user.images.filter(id=k).first()
                 image_model.update(
-                    set__category_ids=list(set(all_category_ids))
+                    set__category_ids=v
                 )
                 image_model.thumbnail(regen=True)
 
         except (ValueError, TypeError) as e:
-            return {'message': str(e)}, 400
+            return {'message': str(e) + str(new_category_ids)}, 400
 
         return {"success": True}
