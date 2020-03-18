@@ -92,6 +92,104 @@ class Dataset(Resource):
         return query_util.fix_ids(dataset)
 
 
+@api.route('/batch-create')
+class Datasets(Resource):
+    @login_required
+    def post(self):
+        """ Batch import datasets """
+        if not current_user.is_admin:
+            return {"success": False, "message": "Access denied"}, 401
+
+        categories = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
+        category_ids = CategoryModel.bulk_create(categories)
+
+        dataset_path = os.getenv("DATASET_DIRECTORY", "/datasets/")
+
+        dirs = []
+        for f in os.listdir(dataset_path):
+            if os.path.isdir(os.path.join(dataset_path, f)):
+                dirs.append(f)
+
+        already_exist = []
+        errored = []
+        for dir in dirs:
+            try:
+                dataset = DatasetModel(name=dir, categories=category_ids)
+                dataset.save()
+            except NotUniqueError:
+                already_exist.append(dir)
+                continue
+            except Exception as e:
+                errored.append(dir + ": " + str(e))
+                continue
+
+        return {'message': 'Already exist: ' + str(already_exist) + ', Error: ' + str(errored)}, 200
+
+
+@api.route('/batch-scan')
+class Datasets(Resource):
+    @login_required
+    def post(self):
+        """ Batch scan datasets """
+        if not current_user.is_admin:
+            return {"success": False, "message": "Access denied"}, 401
+
+        dataset_path = os.getenv("DATASET_DIRECTORY", "/datasets/")
+
+        dirs = []
+        for f in os.listdir(dataset_path):
+            if os.path.isdir(os.path.join(dataset_path, f)):
+                dirs.append(f)
+
+        n_dirs = len(dirs)
+        errored = []
+        for dir in dirs:
+            try:
+                dataset = current_user.datasets.filter(name=dir, deleted=False).first()
+                dataset.scan()
+            except Exception as e:
+                errored.append(dir + ": " + str(e))
+                continue
+
+        return {'message': 'Success: ' + str((n_dirs-len(errored))/n_dirs) + ', Error: ' + str(errored)}, 200
+
+
+@api.route('/batch-coco-import')
+class Datasets(Resource):
+    @login_required
+    def post(self):
+        """ Batch import cocofiles """
+        if not current_user.is_admin:
+            return {"success": False, "message": "Access denied"}, 401
+
+        dataset_path = os.getenv("DATASET_DIRECTORY", "/datasets/")
+        coco_path = "/cocos/"
+
+        dirs = []
+        for f in os.listdir(dataset_path):
+            if os.path.isdir(os.path.join(dataset_path, f)):
+                dirs.append(f)
+
+        cocos = os.listdir(coco_path)
+        coco_files = {}
+        for f in cocos:
+            if os.path.isfile(os.path.join(coco_path, f)):
+                name = f.split('.')[0]
+                coco_files[name] = os.path.join(coco_path, f)
+
+        n_dirs = len(dirs)
+        errored = []
+        for dir in dirs:
+            try:
+                dataset = current_user.datasets.filter(name=dir, deleted=False).first()
+                dataset.import_coco(json.load(open(coco_files[dataset.name])))
+            except Exception as e:
+                errored.append(dir + ": " + str(e))
+                continue
+
+        return {'message': 'Success: ' + str((n_dirs-len(errored))/n_dirs) + ', Error: ' + str(errored)}, 200
+
+
 def download_images(output_dir, args):
     for keyword in args['keywords']:
         response = gid.googleimagesdownload()
