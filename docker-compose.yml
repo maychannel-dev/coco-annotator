@@ -19,6 +19,7 @@ services:
       - FILE_WATCHER=true
     volumes:
       - "./datasets:/datasets"
+      - "./cocos:/cocos"
       - "./models:/models"
     depends_on:
       - database
@@ -30,6 +31,7 @@ services:
     image: jsbroks/coco-annotator:workers-stable
     volumes:
       - "./datasets:/datasets"
+      - "./cocos:/cocos"
     depends_on:
       - messageq
       - database

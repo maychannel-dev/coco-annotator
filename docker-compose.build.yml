@@ -23,6 +23,7 @@ services:
       - NAME=Test Annotator
     volumes:
       - "./datasets:/datasets"
+      - "./cocos:/cocos"
       - "./models:/models"
     depends_on:
       - database
@@ -40,6 +41,7 @@ services:
       - "./backend/workers:/workspace/workers"
       - "./backend/database:/workspace/database"
       - "./datasets:/datasets"
+      - "./cocos:/cocos"
     depends_on:
       - messageq
       - database
