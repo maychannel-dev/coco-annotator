@@ -17,7 +17,8 @@ from database import (
     DatasetModel,
     CategoryModel,
     AnnotationModel,
-    ExportModel
+    ExportModel,
+    TaskModel
 )
 
 import datetime
@@ -93,7 +94,7 @@ class Dataset(Resource):
 
 
 @api.route('/batch-create')
-class Datasets(Resource):
+class DatasetBatchCreate(Resource):
     @login_required
     def post(self):
         """ Batch import datasets """
@@ -130,7 +131,7 @@ class Datasets(Resource):
 
 
 @api.route('/batch-scan')
-class Datasets(Resource):
+class DatasetBatchScan(Resource):
     @login_required
     def post(self):
         """ Batch scan datasets """
@@ -144,21 +145,25 @@ class Datasets(Resource):
             if os.path.isdir(os.path.join(dataset_path, f)):
                 dirs.append(f)
 
-        n_dirs = len(dirs)
+        already_scaned = []
         errored = []
         for dir in dirs:
             try:
                 dataset = current_user.datasets.filter(name=dir, deleted=False).first()
-                dataset.scan()
+                task = TaskModel.objects(name="Scanning {} for new images".format(dataset.name), dataset_id=dataset.id, completed=True).first()
+                if task is None:
+                    dataset.scan()
+                else:
+                    already_scaned.append(dir)
             except Exception as e:
                 errored.append(dir + ": " + str(e))
                 continue
 
-        return {'message': 'Success: ' + str((n_dirs-len(errored))/n_dirs) + ', Error: ' + str(errored)}, 200
+        return {'message': 'Already scaned: ' + str(already_scaned) + ', Error: ' + str(errored)}, 200
 
 
 @api.route('/batch-coco-import')
-class Datasets(Resource):
+class DatasetBatchCOCOImport(Resource):
     @login_required
     def post(self):
         """ Batch import cocofiles """
@@ -180,17 +185,21 @@ class Datasets(Resource):
                 name = f.split('.')[0]
                 coco_files[name] = os.path.join(coco_path, f)
 
-        n_dirs = len(dirs)
+        already_imported = []
         errored = []
         for dir in dirs:
             try:
                 dataset = current_user.datasets.filter(name=dir, deleted=False).first()
-                dataset.import_coco(json.load(open(coco_files[dataset.name])))
+                task = TaskModel.objects(name="Import COCO format into {}".format(dataset.name), dataset_id=dataset.id, completed=True).first()
+                if task is None:
+                    dataset.import_coco(json.load(open(coco_files[dataset.name])))
+                else:
+                    already_imported.append(dir)
             except Exception as e:
                 errored.append(dir + ": " + str(e))
                 continue
 
-        return {'message': 'Success: ' + str((n_dirs-len(errored))/n_dirs) + ', Error: ' + str(errored)}, 200
+        return {'message': 'Already imported: ' + str(already_imported) + ', Error: ' + str(errored)}, 200
 
 
 def download_images(output_dir, args):
