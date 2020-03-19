@@ -1,4 +1,4 @@
-FROM jsbroks/coco-annotator:python-env
+FROM maychannel-dev/coco-annotator:python-env
 
 WORKDIR /workspace/
 

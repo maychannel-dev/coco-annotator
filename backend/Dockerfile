@@ -2,7 +2,11 @@
 FROM tensorflow/tensorflow:1.14.0-gpu-py3
 
 RUN apt-get update
-RUN apt-get install -y git
+RUN apt-get install -y git \
+    libsm6 \
+    libxext6 \
+    libfontconfig1 \
+    libxrender1
 
 WORKDIR /workspace/
 
