@@ -100,8 +100,11 @@ class Datasets(Resource):
         if not current_user.is_admin:
             return {"success": False, "message": "Access denied"}, 401
 
-        categories = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
-        category_ids = CategoryModel.bulk_create(categories)
+        categories = current_user.categories.filter(deleted=False).all()
+        category_names = []
+        for c in categories:
+            category_names.append(c.name)
+        category_ids = CategoryModel.bulk_create(category_names)
 
         dataset_path = os.getenv("DATASET_DIRECTORY", "/datasets/")
 
@@ -163,7 +166,7 @@ class Datasets(Resource):
             return {"success": False, "message": "Access denied"}, 401
 
         dataset_path = os.getenv("DATASET_DIRECTORY", "/datasets/")
-        coco_path = "/cocos/"
+        coco_path = os.getenv("COCOFILES_DIRECTORY", "/cocos/")
 
         dirs = []
         for f in os.listdir(dataset_path):
