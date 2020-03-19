@@ -17,7 +17,8 @@ from database import (
     DatasetModel,
     CategoryModel,
     AnnotationModel,
-    ExportModel
+    ExportModel,
+    TaskModel
 )
 
 import datetime
@@ -90,6 +91,115 @@ class Dataset(Resource):
             return {'message': 'Dataset already exists. Check the undo tab to fully delete the dataset.'}, 400
 
         return query_util.fix_ids(dataset)
+
+
+@api.route('/batch-create')
+class DatasetBatchCreate(Resource):
+    @login_required
+    def post(self):
+        """ Batch import datasets """
+        if not current_user.is_admin:
+            return {"success": False, "message": "Access denied"}, 401
+
+        categories = current_user.categories.filter(deleted=False).all()
+        category_names = []
+        for c in categories:
+            category_names.append(c.name)
+        category_ids = CategoryModel.bulk_create(category_names)
+
+        dataset_path = os.getenv("DATASET_DIRECTORY", "/datasets/")
+
+        dirs = []
+        for f in os.listdir(dataset_path):
+            if os.path.isdir(os.path.join(dataset_path, f)):
+                dirs.append(f)
+
+        already_exist = []
+        errored = []
+        for dir in dirs:
+            try:
+                dataset = DatasetModel(name=dir, categories=category_ids)
+                dataset.save()
+            except NotUniqueError:
+                already_exist.append(dir)
+                continue
+            except Exception as e:
+                errored.append(dir + ": " + str(e))
+                continue
+
+        return {'message': 'Already exist: ' + str(already_exist) + ', Error: ' + str(errored)}, 200
+
+
+@api.route('/batch-scan')
+class DatasetBatchScan(Resource):
+    @login_required
+    def post(self):
+        """ Batch scan datasets """
+        if not current_user.is_admin:
+            return {"success": False, "message": "Access denied"}, 401
+
+        dataset_path = os.getenv("DATASET_DIRECTORY", "/datasets/")
+
+        dirs = []
+        for f in os.listdir(dataset_path):
+            if os.path.isdir(os.path.join(dataset_path, f)):
+                dirs.append(f)
+
+        already_scaned = []
+        errored = []
+        for dir in dirs:
+            try:
+                dataset = current_user.datasets.filter(name=dir, deleted=False).first()
+                task = TaskModel.objects(name="Scanning {} for new images".format(dataset.name), dataset_id=dataset.id, completed=True).first()
+                if task is None:
+                    dataset.scan()
+                else:
+                    already_scaned.append(dir)
+            except Exception as e:
+                errored.append(dir + ": " + str(e))
+                continue
+
+        return {'message': 'Already scaned: ' + str(already_scaned) + ', Error: ' + str(errored)}, 200
+
+
+@api.route('/batch-coco-import')
+class DatasetBatchCOCOImport(Resource):
+    @login_required
+    def post(self):
+        """ Batch import cocofiles """
+        if not current_user.is_admin:
+            return {"success": False, "message": "Access denied"}, 401
+
+        dataset_path = os.getenv("DATASET_DIRECTORY", "/datasets/")
+        coco_path = os.getenv("COCOFILES_DIRECTORY", "/cocos/")
+
+        dirs = []
+        for f in os.listdir(dataset_path):
+            if os.path.isdir(os.path.join(dataset_path, f)):
+                dirs.append(f)
+
+        cocos = os.listdir(coco_path)
+        coco_files = {}
+        for f in cocos:
+            if os.path.isfile(os.path.join(coco_path, f)):
+                name = f.split('.')[0]
+                coco_files[name] = os.path.join(coco_path, f)
+
+        already_imported = []
+        errored = []
+        for dir in dirs:
+            try:
+                dataset = current_user.datasets.filter(name=dir, deleted=False).first()
+                task = TaskModel.objects(name="Import COCO format into {}".format(dataset.name), dataset_id=dataset.id, completed=True).first()
+                if task is None:
+                    dataset.import_coco(json.load(open(coco_files[dataset.name])))
+                else:
+                    already_imported.append(dir)
+            except Exception as e:
+                errored.append(dir + ": " + str(e))
+                continue
+
+        return {'message': 'Already imported: ' + str(already_imported) + ', Error: ' + str(errored)}, 200
 
 
 def download_images(output_dir, args):
